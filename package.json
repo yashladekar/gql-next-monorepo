@@ -7,7 +7,17 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "turbo format",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "test": "pnpm -r --if-present test",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down -v",
+    "db:generate": "pnpm --filter @workspace/db prisma:generate",
+    "db:migrate": "pnpm --filter @workspace/db prisma:migrate",
+    "db:push": "pnpm --filter @workspace/db prisma:push",
+    "db:seed": "pnpm --filter @workspace/db seed",
+    "fga:setup": "pnpm --filter @workspace/authz fga:setup",
+    "fga:seed": "pnpm --filter @workspace/authz fga:seed",
+    "setup": "pnpm db:generate && pnpm db:push && pnpm db:seed && pnpm fga:setup"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",

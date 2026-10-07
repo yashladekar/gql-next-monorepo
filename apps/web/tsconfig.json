@@ -3,7 +3,11 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./*"],
-      "@workspace/ui/*": ["../../packages/ui/src/*"]
+      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@workspace/db": ["../../packages/db/src/index.ts"],
+      "@workspace/db/*": ["../../packages/db/src/*"],
+      "@workspace/authz": ["../../packages/authz/src/index.ts"],
+      "@workspace/authz/*": ["../../packages/authz/src/*"]
     },
     "plugins": [
       {

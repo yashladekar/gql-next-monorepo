@@ -1,0 +1,30 @@
+{
+  "name": "@workspace/authz",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "fga:setup": "dotenv -e ../../.env -o -- tsx src/scripts/setup.ts",
+    "fga:seed": "dotenv -e ../../.env -o -- tsx src/scripts/seed-authz.ts",
+    "test": "dotenv -e ../../.env -o -- vitest run",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openfga/sdk": "^0.9.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^10",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  }
+}

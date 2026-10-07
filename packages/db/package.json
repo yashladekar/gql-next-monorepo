@@ -1,0 +1,33 @@
+{
+  "name": "@workspace/db",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "prisma:generate": "dotenv -e ../../.env -o -- prisma generate",
+    "prisma:migrate": "dotenv -e ../../.env -o -- prisma migrate dev",
+    "prisma:push": "dotenv -e ../../.env -o -- prisma db push",
+    "seed": "dotenv -e ../../.env -o -- tsx src/seed.ts",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "@workspace/authz": "workspace:*",
+    "better-auth": "^1.7.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^10",
+    "prisma": "6.19.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  }
+}

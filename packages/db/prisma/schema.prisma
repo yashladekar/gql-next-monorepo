@@ -1,0 +1,227 @@
+// FGAC reference app schema.
+// Auth models (User/Session/Account/Verification) follow Better Auth's Prisma
+// shape; domain models store app data only. Resource access itself lives in
+// OpenFGA, not in these tables.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Better Auth
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  memberships          Membership[]
+  teamMembers          TeamMember[]
+  createdProjects      Project[]       @relation("ProjectCreatedBy")
+  createdDocuments     Document[]      @relation("DocumentCreatedBy")
+  accessRequests       AccessRequest[] @relation("AccessRequestRequester")
+  decidedAccessRequests AccessRequest[] @relation("AccessRequestDecider")
+  auditLogs            AuditLog[]      @relation("AuditActor")
+
+  @@unique([email])
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+// ---------------------------------------------------------------------------
+// Domain
+// ---------------------------------------------------------------------------
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum AccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Organization {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  // Billing fields: exposed ONLY to viewers with organization.manage_billing.
+  billingEmail String?
+  plan         String   @default("free")
+  monthlyRevenue Int    @default(0)
+  createdAt    DateTime @default(now())
+
+  memberships    Membership[]
+  teams          Team[]
+  projects       Project[]
+  accessRequests AccessRequest[]
+  auditLogs      AuditLog[]
+}
+
+// `role` is a display read-model for the members table. Authorization always
+// goes through OpenFGA; this column is kept in sync on writes and never used
+// to make an access decision.
+model Membership {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrgRole  @default(MEMBER)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model Team {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members      TeamMember[]
+
+  @@unique([organizationId, name])
+}
+
+model TeamMember {
+  id     String @id @default(cuid())
+  teamId String
+  userId String
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  archived       Boolean  @default(false)
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation("ProjectCreatedBy", fields: [createdById], references: [id])
+  documents    Document[]
+
+  @@index([organizationId])
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  projectId   String
+  title       String
+  body        String   @default("")
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("DocumentCreatedBy", fields: [createdById], references: [id])
+
+  @@index([projectId])
+}
+
+model AccessRequest {
+  id                String              @id @default(cuid())
+  organizationId    String
+  userId            String
+  resourceType      String
+  resourceId        String
+  requestedRelation String
+  message           String?
+  status            AccessRequestStatus @default(PENDING)
+  createdAt         DateTime            @default(now())
+  decidedById       String?
+  decidedAt         DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation("AccessRequestRequester", fields: [userId], references: [id], onDelete: Cascade)
+  decidedBy    User?        @relation("AccessRequestDecider", fields: [decidedById], references: [id])
+
+  @@index([organizationId, status])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  actorId        String
+  action         String
+  resourceType   String
+  resourceId     String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor        User         @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([organizationId, createdAt])
+}

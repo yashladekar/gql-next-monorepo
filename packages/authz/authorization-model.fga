@@ -1,0 +1,69 @@
+model
+  schema 1.1
+
+# ---------------------------------------------------------------------------
+# FGAC reference app authorization model.
+# Source of truth for every access decision. See src/model.ts for the same
+# model as JSON (what actually gets written to OpenFGA).
+#
+# Inheritance: organization -> project -> document, and organization -> team.
+#   * organization owner  => can_manage_billing, can_delete_project, ...
+#   * organization admin  => can_edit_project, can_manage_members, ...
+# A user's role is never checked in application code; only these relations are.
+# ---------------------------------------------------------------------------
+
+type user
+
+type organization
+  relations
+    define owner: [user]
+    define admin: [user]
+    define member: [user]
+    define can_view: member or admin or owner
+    # Members list and role management are admin/owner only.
+    define can_view_members: admin or owner
+    define can_view_teams: member or admin or owner
+    # Only admins/owners see every project; plain members see only projects
+    # they are directly related to (via viewer/editor/owner/team).
+    define can_view_projects: admin or owner
+    define can_manage_organization: admin or owner
+    define can_manage_members: admin or owner
+    define can_manage_teams: admin or owner
+    define can_view_audit_logs: admin or owner
+    define can_manage_billing: owner
+    define can_create_project: admin or owner
+    define can_edit_project: admin or owner
+    define can_delete_project: owner
+
+type team
+  relations
+    define organization: [organization]
+    define owner: [user]
+    define member: [user]
+    define can_view: member or owner or can_view from organization
+    define can_view_members: member or owner or can_view_members from organization
+    define can_manage_team: owner or can_manage_teams from organization
+
+type project
+  relations
+    define organization: [organization]
+    define owner: [user]
+    define editor: [user, team#member]
+    define viewer: [user, team#member]
+    define can_view: viewer or editor or owner or can_view_projects from organization
+    define can_edit: editor or owner or can_edit_project from organization
+    define can_delete: owner or can_delete_project from organization
+    define can_share: editor or owner
+    define can_create_document: editor or owner
+    define can_manage_project: owner or can_manage_organization from organization
+
+type document
+  relations
+    define project: [project]
+    define owner: [user]
+    define editor: [user]
+    define viewer: [user]
+    define can_view: viewer or editor or owner or can_view from project
+    define can_edit: editor or owner or can_edit from project
+    define can_delete: owner or can_delete from project
+    define can_share: editor or owner or can_share from project
