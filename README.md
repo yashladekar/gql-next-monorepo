@@ -86,11 +86,30 @@ pnpm dev             # http://localhost:3000
 > Postgres is exposed on host port **5433** (container 5432) to avoid clashing with a local Postgres;
 > OpenFGA runs on **8080** with a playground at **3001**.
 
+### Running without Docker
+
+No Docker? Run OpenFGA natively. Point `OPENFGA_API_URL` in `.env` at a running OpenFGA (or use the
+helper below, which downloads and runs it for you) and use your own PostgreSQL for the app data:
+
+```bash
+pnpm openfga:up      # download the binary if missing, start OpenFGA, publish the model + tuples
+pnpm openfga:status  # is it running?
+pnpm openfga:down    # stop it
+```
+
+The helper reads `OPENFGA_API_URL` from `.env` to choose the port (gRPC uses `port + 1`), downloads the
+OpenFGA release into `.tools/`, and runs it with an in-memory datastore. Because that datastore is
+in-memory, re-run `pnpm openfga:up` after any restart — it recreates the store, model and tuples and
+rewrites `FGA_STORE_ID` / `FGA_MODEL_ID` in `.env` (then restart `pnpm dev`). Overrides:
+`OPENFGA_VERSION`, `OPENFGA_HTTP_PORT`, `OPENFGA_GRPC_PORT`, and `OPENFGA_DATASTORE_ENGINE` /
+`OPENFGA_DATASTORE_URI` (e.g. point it at PostgreSQL for a persistent store).
+
 Useful scripts:
 
 | Script | Purpose |
 |---|---|
 | `pnpm docker:up` / `pnpm docker:down` | Start / stop Postgres + OpenFGA |
+| `pnpm openfga:install` / `openfga:up` / `openfga:down` / `openfga:status` | Run OpenFGA natively, no Docker |
 | `pnpm db:generate` / `db:push` / `db:migrate` / `db:seed` | Prisma |
 | `pnpm fga:setup` / `pnpm fga:seed` | Write OpenFGA model / tuples |
 | `pnpm dev` / `pnpm build` / `pnpm typecheck` / `pnpm lint` / `pnpm test` | App |

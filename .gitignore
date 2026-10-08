@@ -28,6 +28,9 @@ dist
 .DS_Store
 *.pem
 
+# local no-docker toolchain (OpenFGA binary, dedicated Postgres cluster)
+.tools/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
