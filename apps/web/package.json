@@ -16,6 +16,7 @@
     "@pothos/core": "^4.15.1",
     "@pothos/plugin-scope-auth": "^4.2.1",
     "@tanstack/react-query": "^5.104.1",
+    "@workspace/auth": "workspace:*",
     "@workspace/authz": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/ui": "workspace:*",

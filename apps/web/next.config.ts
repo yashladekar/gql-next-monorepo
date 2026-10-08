@@ -7,7 +7,7 @@ config({ path: "../../.env", override: true })
 config({ path: ".env.local", override: true })
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@workspace/ui", "@workspace/db", "@workspace/authz"],
+  transpilePackages: ["@workspace/ui", "@workspace/db", "@workspace/authz", "@workspace/auth"],
   experimental: {
     authInterrupts: true,
   },

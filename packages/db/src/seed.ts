@@ -24,10 +24,12 @@ const teamMembers: { team: string; user: string }[] = [
 async function seedUsers(): Promise<void> {
   for (const demo of DEMO_USERS) {
     const password = await hashPassword(DEMO_PASSWORD)
+    // Owners/admins may open the admin console and Better Auth Studio.
+    const role = demo.id === users.alice || demo.id === users.bob ? "admin" : "member"
     await prisma.user.upsert({
       where: { id: demo.id },
-      update: { name: demo.name, email: demo.email },
-      create: { id: demo.id, name: demo.name, email: demo.email, emailVerified: true },
+      update: { name: demo.name, email: demo.email, role },
+      create: { id: demo.id, name: demo.name, email: demo.email, emailVerified: true, role },
     })
     await prisma.account.upsert({
       where: { id: `account_${demo.id}` },

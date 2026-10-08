@@ -22,6 +22,9 @@ model User {
   email         String
   emailVerified Boolean   @default(false)
   image         String?
+  // Application role for the admin console (Better Auth Studio requires one).
+  // Authorization in the app itself still flows through OpenFGA, never this column.
+  role          String    @default("member")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
